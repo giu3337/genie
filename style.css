@@ -63,6 +63,27 @@ body::before {
 }
 
 /* 
+   Scrollbar 
+*/
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 
    Layout
 */
 
@@ -138,6 +159,8 @@ textarea {
 textarea:focus {
   outline: none;
   border-bottom-color: var(--accent-primary);
+  background: linear-gradient(to top, rgba(255, 200, 100, 0.03), transparent);
+  box-shadow: 0 4px 15px -10px var(--accent-glow);
 }
 
 textarea::placeholder {
@@ -225,6 +248,37 @@ textarea::placeholder {
 }
 
 /* 
+   Reset Button
+*/
+
+.reset-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 20px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition-quick);
+  display: flex;
+  margin: var(--space-lg) auto 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.reset-btn:focus {
+  outline: none;
+}
+
+.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--accent-glow);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(255, 200, 100, 0.1);
+}
+
+/* 
    Output Section
 */
 
@@ -276,8 +330,7 @@ textarea::placeholder {
   color: var(--accent-glow);
 }
 
-#output-content h3,
-#output-content h4 {
+#output-content h3 {
   margin-top: 1.5em;
   margin-bottom: 0.5em;
   font-weight: 700;
@@ -286,6 +339,16 @@ textarea::placeholder {
   padding-bottom: 0.25em;
   display: inline-block;
   letter-spacing: 0.5px;
+  font-size: 1.3rem;
+}
+
+#output-content h4 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  color: var(--accent-glow);
+  font-size: 1.1rem;
+  opacity: 0.9;
 }
 
 #output-content strong {

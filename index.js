@@ -23,28 +23,57 @@ const userInput = document.getElementById("user-input");
 const outputContainer = document.getElementById("output-container");
 const outputContent = document.getElementById("output-content");
 const lampButton = document.getElementById("lamp-button");
+const resetButton = document.getElementById("reset-button");
 
 // Maintain conversation history
 let conversationHistory = [
   {
     role: "system",
-    content: `You are the Gift Genie!
-    Make your gift suggestions thoughtful and practical.
-    The user will describe the gift's recipient.
-    You are fully bilingual in English and Spanish. Important: ALWAYS respond in the exact same language the user writes in.
-    
-    Your response must be beautifully formatted in structured Markdown. Use emojis where appropriate.
-    
-    Each gift must: 
-      - Have a clear heading (using H3: ###)
-      - A short explanation of why it would work
+    content: `<persona>
+You are the Gift Genie! A welcoming, magical, and friendly assistant who helps users find the perfect gift.
+You are fully bilingual in English and Spanish. Important: ALWAYS respond in the exact same language the user writes in.
+</persona>
 
-    Skip intros and conclusions. 
-    Only output gift suggestions.
-    End with a "Questions for you" section (using H3: ###) with follow-ups 
-    that would help improve the recommendations.`
+<rules>
+- Make your gift suggestions thoughtful and practical based on the user's description of the recipient.
+- PAY CLOSE ATTENTION TO CONTEXT:
+  - If the user mentions a specific budget, NEVER exceed it.
+  - If the user mentions a specific location, ONLY suggest gifts that can be easily acquired or experienced in that location.
+- Keep your tone concise (don't over-explain your magic), but remain friendly.
+</rules>
+
+<formatting>
+Your response must be beautifully formatted in structured Markdown. Use emojis where appropriate.
+Do not use excessive bullet points for explanations; use smoothly flowing prose paragraphs.
+
+For EACH gift suggestion, you must provide exactly this structure:
+### [Gift Name] [Emoji]
+[A smoothly flowing prose paragraph explaining why this gift is perfect for them]
+#### How to get it
+[A short explanation guiding the user on where/how to purchase or organize this gift within their mentioned location/constraints]
+
+After listing all gifts, end your response with exactly this section:
+### Questions for you
+[Ask 1-2 follow-up questions that would help you improve the recommendations if they need more ideas]
+</formatting>
+
+Skip intros and conclusions. Only output the gift suggestions and the final questions section.`
   }
 ];
+
+function resetApp() {
+  // Keep the system prompt at index 0, wipe everything else
+  conversationHistory.length = 1;
+  
+  // Reset UI elements
+  outputContent.innerHTML = "";
+  outputContainer.classList.remove("visible");
+  outputContainer.classList.add("hidden");
+  resetButton.classList.add("hidden");
+  
+  // Bring focus back to the input for a new wish
+  userInput.focus();
+}
 
 
 
@@ -52,6 +81,7 @@ function start() {
   // Setup UI event listeners (Estructura del profe)
   userInput.addEventListener("input", () => autoResizeTextarea(userInput));
   giftForm.addEventListener("submit", handleGiftRequest);
+  resetButton.addEventListener("click", resetApp);
 }
 
 async function handleGiftRequest(e) {
@@ -67,6 +97,7 @@ async function handleGiftRequest(e) {
   outputContent.innerHTML = "";
   outputContainer.classList.remove("hidden");
   outputContainer.classList.add("visible");
+  resetButton.classList.add("hidden");
 
   // Add blinking cursor to indicate waiting for first byte
   outputContent.innerHTML = '<span class="typing-active"></span>';
@@ -110,6 +141,14 @@ async function handleGiftRequest(e) {
     // Remove the cursor when finished
     outputContent.innerHTML = DOMPurify.sanitize(marked.parse(fullResponse));
 
+    // Clear input now that request is successful
+    userInput.value = "";
+    // Ensure it returns to its original height
+    userInput.style.height = "auto";
+    
+    // Show the reset button allowing them to start over easily
+    resetButton.classList.remove("hidden");
+
   } catch (error) {
     console.error("Error:", error);
     let errorMessage = "Oops! The magic fizzled out. Please try again.";
@@ -126,9 +165,6 @@ async function handleGiftRequest(e) {
   } finally {
     // Clear loading state (Usando función de utils.js)
     setLoading(false, lampButton, outputContainer, userInput);
-    userInput.value = "";
-    // Aseguramos que vuelva a su altura original si usamos autoResizeTextarea
-    userInput.style.height = "auto";
   }
 }
 
