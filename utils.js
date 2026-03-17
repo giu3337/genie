@@ -1,23 +1,3 @@
-export function checkEnvironment() {
-  const url = import.meta.env.VITE_AI_URL;
-  const model = import.meta.env.VITE_AI_MODEL;
-  const key = import.meta.env.VITE_AI_KEY;
-
-  if (!url) {
-    throw new Error("Falta VITE_AI_URL en tu archivo .env");
-  }
-
-  if (!model) {
-    throw new Error("Falta VITE_AI_MODEL en tu archivo .env");
-  }
-
-  if (!key) {
-    throw new Error("Falta VITE_AI_KEY en tu archivo .env");
-  }
-
-  console.log("✅ Conexión establecida con:", url);
-  console.log("✅ Modelo listo:", model);
-}
 
 export function autoResizeTextarea(textarea) {
   textarea.style.height = "auto";

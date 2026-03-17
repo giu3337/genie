@@ -289,6 +289,16 @@ textarea::placeholder {
 #output-container {
   opacity: 0;
   transition: opacity var(--transition-smooth);
+  
+  /* Glassmorphism Premium Effects */
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  margin-top: 1rem;
 }
 
 #output-container.visible {
@@ -354,6 +364,21 @@ textarea::placeholder {
 #output-content strong {
   color: var(--accent-glow);
   font-weight: 600;
+}
+
+/* Premium Link Styling */
+#output-content a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 200, 100, 0.3);
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+#output-content a:hover {
+  color: lch(90% 60 85); /* Un dorado más brillante */
+  border-bottom-color: lch(90% 60 85);
+  text-shadow: 0 0 8px rgba(255, 200, 100, 0.4);
 }
 
 /* Typewriter Cursor Effect */

@@ -1,21 +1,11 @@
 // 1. IMPORTACIÓN
-import { checkEnvironment, autoResizeTextarea, setLoading } from "./utils.js"
-import OpenAI from "openai";
+import { autoResizeTextarea, setLoading } from "./utils.js"
 
 // Import marked for markdown parsing and DOMPurify for security
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 
 
-// 2. CONFIGURACIÓN DEL CLIENTE
-const client = new OpenAI({
-  apiKey: import.meta.env.VITE_AI_KEY,
-  baseURL: import.meta.env.VITE_AI_URL,
-  dangerouslyAllowBrowser: true
-});
-
-// 3. SEGURIDAD
-checkEnvironment();
 
 // DOM Elements
 const giftForm = document.getElementById("gift-form");
@@ -35,11 +25,12 @@ You are fully bilingual in English and Spanish. Important: ALWAYS respond in the
 </persona>
 
 <rules>
-- Make your gift suggestions thoughtful and practical based on the user's description of the recipient.
+- Make your gift suggestions thoughtful and practical based on the user's description.
+- IMPORTANT: You have access to a web search tool. Use it to find real, currently available products. Prefer products that are widely available and well-reviewed.
 - PAY CLOSE ATTENTION TO CONTEXT:
-  - If the user mentions a specific budget, NEVER exceed it.
+  - If the user mentions a specific budget, NEVER exceed it. You must find real items that fit the budget.
   - If the user mentions a specific location, ONLY suggest gifts that can be easily acquired or experienced in that location.
-- Keep your tone concise (don't over-explain your magic), but remain friendly.
+- If you can't find a working link, say so rather than guessing.
 </rules>
 
 <formatting>
@@ -50,14 +41,18 @@ For EACH gift suggestion, you must provide exactly this structure:
 ### [Gift Name] [Emoji]
 [A smoothly flowing prose paragraph explaining why this gift is perfect for them]
 #### How to get it
-[A short explanation guiding the user on where/how to purchase or organize this gift within their mentioned location/constraints]
+[A short explanation guiding the user on where to purchase this gift, including one or more REAL links to websites/businesses where the gift can be bought. Also include the estimated current price.]
 
-After listing all gifts, end your response with exactly this section:
+After listing all gifts, end your response with exactly these two sections:
+
 ### Questions for you
-[Ask 1-2 follow-up questions that would help you improve the recommendations if they need more ideas]
+[Ask 1-2 follow-up questions that would help you improve the recommendations]
+
+## Wanna browse yourself?
+[Provide 2-3 markdown links to various ecommerce sites (like Amazon, Etsy, etc.) with relevant search queries and filters already applied in the URL based on the user's request]
 </formatting>
 
-Skip intros and conclusions. Only output the gift suggestions and the final questions section.`
+Skip intros and conclusions. Only output the gift suggestions and the final sections.`
   }
 ];
 
@@ -109,28 +104,67 @@ async function handleGiftRequest(e) {
   });
 
   try {
-    const stream = await client.chat.completions.create({
-      model: import.meta.env.VITE_AI_MODEL,
-      messages: conversationHistory,
-      temperature: 1.2, // Mayor temperatura = ideas más locas y creativas
-      stream: true // VITAL: Activa la respuesta en tiempo real
+    // Send the request to our secure Node.js backend
+    const response = await fetch("http://localhost:3000/api/gift", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ messages: conversationHistory }),
     });
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Prepare to read the streamed SSE response
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
     let fullResponse = "";
 
-    for await (const chunk of stream) {
-      // Extract the text fragment from this specific chunk
-      const content = chunk.choices[0]?.delta?.content || "";
+    // Read chunks as they arrive from the backend
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-      // Append to our full response tracker
-      fullResponse += content;
+      // Decode the byte stream into text
+      const chunkText = decoder.decode(value, { stream: true });
+      
+      // The chunks come in SSE format like: "data: {"content":"Hello"}\n\n"
+      // We need to parse each data line
+      const lines = chunkText.split("\n");
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          const dataString = line.slice(6); // Remove "data: "
+          
+          if (dataString === "[DONE]") {
+             // Server sent completion signal
+             continue; 
+          }
 
-      // Parse current accumulated text from markdown to safe HTML
-      const rawHtml = marked.parse(fullResponse);
-      const cleanHtml = DOMPurify.sanitize(rawHtml);
+          try {
+            const parsedData = JSON.parse(dataString);
+            
+            // Check for server errors
+            if (parsedData.error) {
+               throw new Error(parsedData.error);
+            }
+            
+            if (parsedData.content) {
+              fullResponse += parsedData.content;
+              
+              // Parse current accumulated text from markdown to safe HTML
+              const rawHtml = marked.parse(fullResponse);
+              const cleanHtml = DOMPurify.sanitize(rawHtml);
 
-      // Update the UI *and* keep the blinking cursor at the end
-      outputContent.innerHTML = cleanHtml + '<span class="typing-active"></span>';
+              // Update the UI *and* keep the blinking cursor at the end
+              outputContent.innerHTML = cleanHtml + '<span class="typing-active"></span>';
+            }
+          } catch (e) {
+            console.error("Error parsing JSON chunk:", e, dataString);
+          }
+        }
+      }
     }
 
     // Done streaming. Save full response to history.
