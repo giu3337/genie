@@ -112,6 +112,7 @@ async function handleGiftRequest(e) {
     const stream = await client.chat.completions.create({
       model: import.meta.env.VITE_AI_MODEL,
       messages: conversationHistory,
+      temperature: 1.2, // Mayor temperatura = ideas más locas y creativas
       stream: true // VITAL: Activa la respuesta en tiempo real
     });
 
