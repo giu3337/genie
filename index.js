@@ -104,8 +104,13 @@ async function handleGiftRequest(e) {
   });
 
   try {
+    // Determine the correct API URL based on where the app is running
+    const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+      ? 'http://localhost:3000/api/gift' 
+      : '/api/gift';
+
     // Send the request to our secure Node.js backend
-    const response = await fetch("http://localhost:3000/api/gift", {
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

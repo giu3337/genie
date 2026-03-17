@@ -61,7 +61,12 @@ app.post("/api/gift", async (req, res) => {
   }
 });
 
-// Start the server
-app.listen(port, () => {
-  console.log(`🧞 Backend Genie Server listening on port ${port}`);
-});
+// Start the server only if we aren't running in a serverless environment like Vercel
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, () => {
+    console.log(`🧞 Backend Genie Server listening on local port ${port}`);
+  });
+}
+
+// Export the Express API for Vercel's serverless platform
+export default app;
