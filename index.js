@@ -77,6 +77,18 @@ function start() {
   userInput.addEventListener("input", () => autoResizeTextarea(userInput));
   giftForm.addEventListener("submit", handleGiftRequest);
   resetButton.addEventListener("click", resetApp);
+
+  // Allow submitting with Enter key (but Shift+Enter allows new lines)
+  userInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault(); // Prevent default new line
+      
+      // Don't submit if it's currently loading
+      if (!lampButton.disabled) {
+        handleGiftRequest(e);
+      }
+    }
+  });
 }
 
 async function handleGiftRequest(e) {
